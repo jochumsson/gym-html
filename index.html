@@ -168,7 +168,7 @@ function write_header_wag_all_around_result()
 
 function write_result_row_wag_all_around_result(result)
 {
-	console.log(result);
+   console.log(result);
 
    var balance_beam_score_item = result["Balance Beam"];   
    var floor_score_item = result["Floor"];   
@@ -290,19 +290,19 @@ function write_result_rows_multi_score_result(result_obj, index, count, row_writ
 function write_result_table(result_obj, index, count, result_info) 
 {
    {
-		var header_txt = tr("Competition") + ": " + result_info.competition_name + "<br>" +
+      var header_txt = tr("Competition") + ": " + result_info.competition_name + "<br>" +
 							  tr("Discipline") + ": " + tr(result_info.result_type);
 							  
-		if (num(result_info.level) < 99) { 
-		    header_txt += "<br>";
-		    header_txt += tr("Level") + ": " + result_info.level;
-		}
+      if (num(result_info.level) < 99) { 
+         header_txt += "<br>";
+         header_txt += tr("Level") + ": " + result_info.level;
+      }
 		
-		document.getElementById("table_header").innerHTML = header_txt; 
-	}
+      document.getElementById("table_header").innerHTML = header_txt; 
+   }
 
    var txt = "<table border='10' style='width:100%'>";
-   if (result_info.result_type == "WAG All Arround") {
+   if (result_info.all_around_result=="1") {
 		txt += write_header_wag_all_around_result();   
 		txt += write_result_rows_multi_score_result(result_obj, index, count, write_result_row_wag_all_around_result);
    } 
@@ -376,6 +376,20 @@ function request_result(result_info)
 	send_query(next_result_query, handle_result);
 }
 
+function request_all_around_result(result_info)
+{
+   var next_result_query = "SELECT DISTINCT position, competition_name, level, apparatus, gymnast_id, gymnast_name, gymnast_club, result_final_score, score_final_score, base_score, d_score, d_penalty " +
+        "FROM open_competition_all_around_result " + 
+        "WHERE competition_name=\"" + result_info.competition_name + "\" " +
+        "AND level=" + result_info.level + " " +
+        // "AND include_in_all_around " +
+        "ORDER BY position asc, gymnast_id, apparatus asc";
+   console.log("next result sql query: " + next_result_query);
+   current_result_info = result_info;
+        send_query(next_result_query, handle_result);
+}
+
+
 var available_result = [];
 var available_result_entries = 0;
 var available_result_current_index = 0;
@@ -398,10 +412,9 @@ function handle_available_result()
 
 function request_available_result() {
    var get_open_competitions_query = 
-       "SELECT DISTINCT competition_name, level, result_type " +
-       "FROM competition_result_cop_view " +
-       "WHERE competition_closed=false " +
-       "AND level>4 " +
+       "SELECT DISTINCT competition_name, level, result_type, all_around_result " +
+       "FROM open_competition_result " +
+       "WHERE (competition_type!='Svenska Stegserierna' OR level>4)" +
        "ORDER BY level ASC, result_type ASC";
     send_query(get_open_competitions_query, handle_available_result);
 }
@@ -409,10 +422,18 @@ function request_available_result() {
 function show_next_result()
 {
    if (available_result_current_index < available_result_entries) {
-   	var result_info = available_result[available_result_current_index];
-   	console.log("Show result: " + result_info);
-   	request_result(result_info);
-   	available_result_current_index++; 
+      var result_info = available_result[available_result_current_index];
+      console.log("Show result: " + result_info);
+    
+      if (result_info.all_around_result == "1") {
+         console.log("request_all_around_result");
+	 request_all_around_result(result_info);
+      }
+      else {
+         request_result(result_info);
+      }
+
+      available_result_current_index++; 
    }
    else {
    	main();

@@ -2,7 +2,7 @@
 header("Content-Type: application/json; charset=UTF-8");
 $obj = json_decode($_GET["x"], false);
 
-$conn = new mysqli("localhost", "judge", "password", "gym_db");
+$conn = new mysqli("localhost", "judge", "password", "gym_db_2");
 mysqli_set_charset($conn,"utf8");
 
 if ($conn->connect_error) {
